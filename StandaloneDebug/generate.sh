@@ -13,7 +13,7 @@ echo "# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >> $FOLDER/Dockerfil
 echo FROM $NAMESPACE/$BASE:$VERSION >> $FOLDER/Dockerfile
 echo LABEL authors="$AUTHORS" >> $FOLDER/Dockerfile
 echo "" >> $FOLDER/Dockerfile
-cat Dockerfile.txt >> $FOLDER/Dockerfile
+cat ../NodeBase/DockerfileSeleniumStandaloneDebug.txt >> $FOLDER/Dockerfile
 
 BROWSER_LC=$(echo $BROWSER |  tr '[:upper:]' '[:lower:]')
 

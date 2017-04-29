@@ -98,6 +98,18 @@ RUN apt-get install -y xz-utils file dbus-x11 pulseaudio dmz-cursor-theme curl \
 # && rm -rf /tmp/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz \
 # && rm -rf ~/.gnupg
 
+#============
+# OperaDriver
+#============
+ARG OPERA_DRIVER_VERSION=2.27
+RUN wget --no-verbose -O /tmp/operadriver_linux64.zip https://github.com/operasoftware/operachromiumdriver/releases/download/v.$OPERA_DRIVER_VERSION/operadriver_linux64.zip \
+  && rm -rf /opt/operadriver/operadriver \
+  && unzip /tmp/operadriver_linux64.zip -d /opt/selenium \
+  && rm /tmp/operadriver_linux64.zip \
+  && mv /opt/selenium/operadriver_linux64 /opt/selenium/operadriver-$OPERA_DRIVER_VERSION \
+  && chmod 755 /opt/selenium/operadriver-$OPERA_DRIVER_VERSION \
+  && ln -fs /opt/selenium/operadriver-$OPERA_DRIVER_VERSION /usr/bin/operadriver
+
 #==============
 # Xvfb
 #==============

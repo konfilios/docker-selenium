@@ -13,7 +13,7 @@ echo "# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >> $FOLDER/Dockerfil
 echo FROM $NAMESPACE/$BASE:$VERSION >> $FOLDER/Dockerfile
 echo LABEL authors="$AUTHORS" >> $FOLDER/Dockerfile
 echo "" >> $FOLDER/Dockerfile
-cat ./Dockerfile.txt >> $FOLDER/Dockerfile
+cat ../NodeBase/DockerfileSeleniumNodeDebug.txt >> $FOLDER/Dockerfile
 
 cat ./README.template.md \
   | sed "s/##BROWSER##/$BROWSER/" \

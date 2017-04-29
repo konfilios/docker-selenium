@@ -10,4 +10,4 @@ echo "# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >> ./Dockerfile
 echo FROM $NAMESPACE/node-base:$VERSION >> ./Dockerfile
 echo LABEL authors="$AUTHORS" >> ./Dockerfile
 echo "" >> ./Dockerfile
-cat ../NodeBase/DockerfileSelenium.txt >> ./Dockerfile
+cat ../NodeBase/DockerfileSeleniumNode.txt >> ./Dockerfile
