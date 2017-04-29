@@ -15,8 +15,6 @@ echo LABEL authors="$AUTHORS" >> $FOLDER/Dockerfile
 echo "" >> $FOLDER/Dockerfile
 cat ./Dockerfile.txt >> $FOLDER/Dockerfile
 
-cp ./entry_point.sh $FOLDER
-
 BROWSER_LC=$(echo $BROWSER |  tr '[:upper:]' '[:lower:]')
 
 cat ./README.template.md \

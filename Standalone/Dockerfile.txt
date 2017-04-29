@@ -3,8 +3,7 @@ USER root
 #====================================
 # Scripts to run Selenium Standalone
 #====================================
-COPY entry_point.sh /opt/bin/entry_point.sh
-RUN chmod +x /opt/bin/entry_point.sh
+CMD ["/opt/bin/selenium_standalone.sh"]
 
 USER seluser
 

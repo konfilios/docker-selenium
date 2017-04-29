@@ -2,29 +2,187 @@
 # NOTE: DO *NOT* EDIT THIS FILE.  IT IS GENERATED.
 # PLEASE UPDATE Dockerfile.txt INSTEAD OF THIS FILE
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FROM selenium/base:3.4.0-chromium
+FROM selenium/base:local
 LABEL authors=SeleniumHQ
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
 
-#==============
-# VNC and Xvfb
-#==============
-RUN apt-get update -qqy \
+#
+# Update apt sources
+#
+RUN apt-get update -qqy
+
+#============================================
+# Google Chrome
+#============================================
+# can specify versions by CHROME_VERSION;
+#  e.g. google-chrome-stable=53.0.2785.101-1
+#       google-chrome-beta=53.0.2785.92-1
+#       google-chrome-unstable=54.0.2840.14-1
+#       latest (equivalent to google-chrome-stable)
+#       google-chrome-beta  (pull latest beta)
+#============================================
+ARG CHROME_VERSION="google-chrome-stable"
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+  && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+  && apt-get update -qqy \
   && apt-get -qqy install \
-    locales \
-    xvfb \
-  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+    ${CHROME_VERSION:-google-chrome-stable} \
+  && rm /etc/apt/sources.list.d/google-chrome.list
+
+#==================
+# Chrome webdriver
+#==================
+ARG CHROME_DRIVER_VERSION=2.29
+RUN wget --no-verbose -O /tmp/chromedriver_linux64.zip https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
+  && rm -rf /opt/selenium/chromedriver \
+  && unzip /tmp/chromedriver_linux64.zip -d /opt/selenium \
+  && rm /tmp/chromedriver_linux64.zip \
+  && mv /opt/selenium/chromedriver /opt/selenium/chromedriver-$CHROME_DRIVER_VERSION \
+  && chmod 755 /opt/selenium/chromedriver-$CHROME_DRIVER_VERSION \
+  && ln -fs /opt/selenium/chromedriver-$CHROME_DRIVER_VERSION /usr/bin/chromedriver
+
+#=========
+# Firefox
+#=========
+ARG FIREFOX_VERSION=53.0
+RUN apt-get -qqy --no-install-recommends install firefox \
+  && wget --no-verbose -O /tmp/firefox.tar.bz2 https://download-installer.cdn.mozilla.net/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 \
+  && apt-get -y purge firefox \
+  && rm -rf /opt/firefox \
+  && tar -C /opt -xjf /tmp/firefox.tar.bz2 \
+  && rm /tmp/firefox.tar.bz2 \
+  && mv /opt/firefox /opt/firefox-$FIREFOX_VERSION \
+  && ln -fs /opt/firefox-$FIREFOX_VERSION/firefox /usr/bin/firefox
+
+#============
+# GeckoDriver
+#============
+ARG GECKODRIVER_VERSION=0.16.1
+RUN wget --no-verbose -O /tmp/geckodriver.tar.gz https://github.com/mozilla/geckodriver/releases/download/v$GECKODRIVER_VERSION/geckodriver-v$GECKODRIVER_VERSION-linux64.tar.gz \
+  && rm -rf /opt/geckodriver \
+  && tar -C /opt -zxf /tmp/geckodriver.tar.gz \
+  && rm /tmp/geckodriver.tar.gz \
+  && mv /opt/geckodriver /opt/geckodriver-$GECKODRIVER_VERSION \
+  && chmod 755 /opt/geckodriver-$GECKODRIVER_VERSION \
+  && ln -fs /opt/geckodriver-$GECKODRIVER_VERSION /usr/bin/geckodriver
+
+#==============
+# PhantomJS
+#==============
+RUN apt-get install bzip2 libfreetype6 libfontconfig1  -y
+RUN wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-1.9.8-linux-x86_64.tar.bz2
+RUN tar -xvjf phantomjs-1.9.8-linux-x86_64.tar.bz2 && rm phantomjs-1.9.8-linux-x86_64.tar.bz2
+RUN mv /phantomjs-1.9.8-linux-x86_64 /usr/local/phantomjs-1.9.8-linux-x86_64
+RUN ln -s /usr/local/phantomjs-1.9.8-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs
+
+#==============
+# TOR browser
+#==============
+ENV TOR_VERSION=6.5 \
+    TOR_FINGERPRINT=0x4E2C6E8793298290
+
+RUN mkdir ~/.gnupg \
+ && gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${TOR_FINGERPRINT} \
+ && gpg --fingerprint ${TOR_FINGERPRINT} | grep -q "Key fingerprint = EF6E 286D DA85 EA2A 4BA7  DE68 4E2C 6E87 9329 8290" \
+ && apt-get update
+
+RUN apt-get install -y xz-utils file dbus-x11 pulseaudio dmz-cursor-theme curl \
+      hicolor-icon-theme \
+      libcanberra-gtk3-0 libcanberra-gtk-module libcanberra-gtk3-module \
+      libasound2 libglib2.0 libgtk2.0-0 libdbus-glib-1-2 libxt6 libexif12 \
+      libgl1-mesa-glx libgl1-mesa-dri libstdc++6 nvidia-346 \
+      gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+      gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
+
+#RUN mkdir -p /usr/lib/tor-browser \
+# && wget -O /tmp/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz  https://www.torproject.org/dist/torbrowser/${TOR_VERSION}/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz \
+# && wget -O /tmp/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz.asc https://www.torproject.org/dist/torbrowser/${TOR_VERSION}/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz.asc \
+# && gpg /tmp/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz.asc \
+# && tar -Jvxf /tmp/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz --strip=1 -C /usr/lib/tor-browser \
+# && ln -sf /usr/lib/tor-browser/Browser/start-tor-browser /usr/bin/tor-browser \
+# && rm -rf /tmp/tor-browser-linux64-${TOR_VERSION}_en-US.tar.xz \
+# && rm -rf ~/.gnupg
+
+#==============
+# Xvfb
+#==============
+RUN apt-get -qqy install \
+    xvfb
+
+#=====
+# VNC
+#=====
+RUN apt-get -qqy install \
+  x11vnc \
+  && mkdir -p /root/.vnc \
+  && x11vnc -storepasswd secret ~/.vnc/passwd
+
+#=================
+# Locale settings
+#=================
+ENV LANGUAGE en_US.UTF-8
+ENV LANG en_US.UTF-8
+RUN apt-get -qqy install \
+    locales
+RUN locale-gen en_US.UTF-8 \
+  && dpkg-reconfigure --frontend noninteractive locales \
+  && apt-get update -qqy \
+  && apt-get -qqy --no-install-recommends install \
+    language-pack-en
+
+#=======
+# Fonts
+#=======
+RUN apt-get -qqy --no-install-recommends install \
+    fonts-dejavu \
+    fonts-liberation \
+    fonts-ipafont-gothic \
+    xfonts-100dpi \
+    xfonts-75dpi \
+    xfonts-cyrillic \
+    xfonts-scalable
+
+#=========
+# fluxbox
+# A fast, lightweight and responsive window manager
+#=========
+RUN apt-get -qqy install \
+    fluxbox
+
+
+#
+# Cleanup
+#
+
+RUN rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+#=================================
+# Chrome Launch Script Modification
+#=================================
+COPY chrome_launcher.sh /opt/google/chrome/google-chrome
+RUN chmod +x /opt/google/chrome/google-chrome
 
 #==============================
 # Scripts to run Selenium Node
 #==============================
-COPY \
-  entry_point.sh \
-  functions.sh \
-    /opt/bin/
-RUN chmod +x /opt/bin/entry_point.sh
+COPY selenium_standalone_with_vnc.sh /opt/bin/selenium_standalone_with_vnc.sh
+RUN chmod +x /opt/bin/selenium_standalone_with_vnc.sh
+
+COPY selenium_standalone.sh /opt/bin/selenium_standalone.sh
+RUN chmod +x /opt/bin/selenium_standalone.sh
+
+COPY selenium_node_with_vnc.sh /opt/bin/selenium_node_with_vnc.sh
+RUN chmod +x /opt/bin/selenium_node_with_vnc.sh
+
+COPY selenium_node_phantomjs.sh /opt/bin/selenium_node_phantomjs.sh
+RUN chmod +x /opt/bin/selenium_node_phantomjs.sh
+
+COPY selenium_node.sh /opt/bin/selenium_node.sh
+RUN chmod +x /opt/bin/selenium_node.sh
+
+COPY functions.sh /opt/bin/
 
 #============================
 # Some configuration options
@@ -34,6 +192,30 @@ ENV SCREEN_HEIGHT 1020
 ENV SCREEN_DEPTH 24
 ENV DISPLAY :99.0
 
+#========================
+# Selenium Configuration
+#========================
+# As integer, maps to "maxInstances"
+ENV NODE_MAX_INSTANCES 1
+# As integer, maps to "maxSession"
+ENV NODE_MAX_SESSION 1
+# As integer, maps to "port"
+ENV NODE_PORT 5555
+# In milliseconds, maps to "registerCycle"
+ENV NODE_REGISTER_CYCLE 5000
+# In milliseconds, maps to "nodePolling"
+ENV NODE_POLLING 5000
+# In milliseconds, maps to "unregisterIfStillDownAfter"
+ENV NODE_UNREGISTER_IF_STILL_DOWN_AFTER 60000
+# As integer, maps to "downPollingLimit"
+ENV NODE_DOWN_POLLING_LIMIT 2
+# As string, maps to "applicationName"
+ENV NODE_APPLICATION_NAME ""
+
+COPY generate_config /opt/selenium/generate_config
+RUN chmod +x /opt/selenium/generate_config \
+  && chown -R seluser:seluser /opt/selenium
+
 USER seluser
 
-CMD ["/opt/bin/entry_point.sh"]
+CMD ["/opt/bin/selenium_node.sh"]
