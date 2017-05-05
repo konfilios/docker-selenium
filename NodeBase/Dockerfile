@@ -2,7 +2,7 @@
 # NOTE: DO *NOT* EDIT THIS FILE.  IT IS GENERATED.
 # PLEASE UPDATE Dockerfile.txt INSTEAD OF THIS FILE
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FROM selenium/base:local
+FROM selenium/base:3.4.0-chromium
 LABEL authors=SeleniumHQ
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -195,6 +195,15 @@ COPY selenium_node.sh /opt/bin/selenium_node.sh
 RUN chmod +x /opt/bin/selenium_node.sh
 
 COPY functions.sh /opt/bin/
+
+#============================
+# Copy browser-box
+#============================
+COPY scripts/ /var/cache/browser-box/
+COPY etc-fonts-local.conf /etc/fonts/local.conf
+COPY browser-box-entrypoint.sh /sbin/browser-box-entrypoint.sh
+RUN chmod 755 /sbin/browser-box-entrypoint.sh
+
 
 #============================
 # Some configuration options

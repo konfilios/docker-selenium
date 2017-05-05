@@ -190,6 +190,15 @@ RUN chmod +x /opt/bin/selenium_node.sh
 COPY functions.sh /opt/bin/
 
 #============================
+# Copy browser-box
+#============================
+COPY scripts/ /var/cache/browser-box/
+COPY etc-fonts-local.conf /etc/fonts/local.conf
+COPY browser-box-entrypoint.sh /sbin/browser-box-entrypoint.sh
+RUN chmod 755 /sbin/browser-box-entrypoint.sh
+
+
+#============================
 # Some configuration options
 #============================
 ENV SCREEN_WIDTH 1360
